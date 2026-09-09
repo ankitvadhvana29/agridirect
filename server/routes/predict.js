@@ -41,7 +41,6 @@ function round2(n) {
   return Math.round(n * 100) / 100;
 }
 
-// Convert AI rating (1-10) into a price multiplier
 function ratingToMultiplier(rating) {
   if (rating >= 9) return 1.15;
   if (rating >= 8) return 1.08;
@@ -50,7 +49,6 @@ function ratingToMultiplier(rating) {
   return 0.65;
 }
 
-// ---- Existing GET route (no photo, backward compatible) ----
 router.get("/", (req, res) => {
   const { crop, quantity } = req.query;
   if (!crop) return res.status(400).json({ error: "crop is required" });
@@ -60,7 +58,6 @@ router.get("/", (req, res) => {
   res.json(result);
 });
 
-// ---- New POST route: crop photo + AI quality rating ----
 router.post("/photo", async (req, res) => {
   try {
     const { crop, quantityKg, photoBase64 } = req.body;
@@ -71,7 +68,8 @@ router.post("/photo", async (req, res) => {
     if (!apiKey) return res.status(500).json({ error: "AI service not configured" });
 
     const geminiRes = await axios.post(
-`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key=${apiKey}`,      {
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+      {
         contents: [{
           parts: [
             { text: `You are an agricultural quality inspector. Look at this ${crop} photo and rate its quality from 1 to 10 (10 = excellent, fresh, no defects; 1 = poor, damaged, rotten). Respond ONLY in this exact JSON format with no extra text: {"rating": <number>, "reason": "<short reason, max 15 words>"}` },
