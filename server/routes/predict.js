@@ -71,7 +71,7 @@ router.post("/photo", async (req, res) => {
     if (!apiKey) return res.status(500).json({ error: "AI service not configured" });
 
     const geminiRes = await axios.post(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${apiKey}`,
+https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key=${apiKey},
       {
         contents: [{
           parts: [
