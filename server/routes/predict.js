@@ -71,8 +71,7 @@ router.post("/photo", async (req, res) => {
     if (!apiKey) return res.status(500).json({ error: "AI service not configured" });
 
     const geminiRes = await axios.post(
-https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key=${apiKey},
-      {
+`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key=${apiKey}`,      {
         contents: [{
           parts: [
             { text: `You are an agricultural quality inspector. Look at this ${crop} photo and rate its quality from 1 to 10 (10 = excellent, fresh, no defects; 1 = poor, damaged, rotten). Respond ONLY in this exact JSON format with no extra text: {"rating": <number>, "reason": "<short reason, max 15 words>"}` },
