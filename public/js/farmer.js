@@ -5,22 +5,71 @@ function showMsg(text, type) {
   document.getElementById("msg").innerHTML = `<div class="msg ${type}">${text}</div>`;
 }
 
+// Convert selected photo file to base64 (without the data: prefix)
+function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = reader.result; // "data:image/jpeg;base64,XXXX"
+      const base64 = result.split(",")[1];
+      resolve(base64);
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+// Show a small preview when farmer picks a photo
+document.getElementById("cropPhoto").addEventListener("change", (e) => {
+  const file = e.target.files[0];
+  const preview = document.getElementById("photoPreview");
+  if (!file) {
+    preview.innerHTML = "";
+    return;
+  }
+  const url = URL.createObjectURL(file);
+  preview.innerHTML = `<img src="${url}" style="max-width:120px;border-radius:8px;margin-top:6px;" />`;
+});
+
 async function getAIPrice() {
   const crop = document.getElementById("cropName").value;
   const quantity = document.getElementById("quantity").value || 1;
+  const photoInput = document.getElementById("cropPhoto");
+  const photoFile = photoInput.files[0];
+
+  const aiResultEl = document.getElementById("aiResult");
+
+  if (!photoFile) {
+    aiResultEl.innerHTML = `<div class="msg error">Please select a crop photo first.</div>`;
+    return;
+  }
+
+  aiResultEl.innerHTML = `<div class="msg">🤖 Analyzing photo, please wait...</div>`;
 
   try {
-    const data = await api(`/predict?crop=${crop}&quantity=${quantity}`);
-    document.getElementById("aiResult").innerHTML = `
+    const photoBase64 = await fileToBase64(photoFile);
+
+    const data = await api(`/predict/photo`, {
+      method: "POST",
+      body: {
+        crop,
+        quantityKg: Number(quantity),
+        photoBase64
+      }
+    });
+
+    aiResultEl.innerHTML = `
       <div class="msg success">
-        🤖 <strong>AI Suggested Price:</strong>
+        🤖 <strong>AI Quality Rating:</strong> ${data.qualityRating}/10<br/>
+        <small>${data.qualityReason || ""}</small><br/><br/>
+        <strong>AI Suggested Price:</strong>
         <span class="price-ai">₹${data.suggestedPricePerKg}/kg</span><br/>
         Fair range: ₹${data.fairRange.low} – ₹${data.fairRange.high} /kg<br/>
         <small>${data.note}</small>
       </div>`;
     document.getElementById("farmerPrice").value = data.suggestedPricePerKg;
   } catch (err) {
-    showMsg(err.message, "error");
+    aiResultEl.innerHTML = `<div class="msg error">${err.message}</div>`;
   }
 }
 
@@ -40,6 +89,7 @@ document.getElementById("listForm").addEventListener("submit", async (e) => {
     showMsg("Produce listed successfully!", "success");
     document.getElementById("listForm").reset();
     document.getElementById("aiResult").innerHTML = "";
+    document.getElementById("photoPreview").innerHTML = "";
     loadMyProducts();
   } catch (err) {
     showMsg(err.message, "error");

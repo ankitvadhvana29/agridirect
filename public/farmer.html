@@ -51,6 +51,10 @@
       <label>Quantity (kg)</label>
       <input type="number" id="quantity" min="1" required />
 
+      <label>Crop Photo</label>
+      <input type="file" id="cropPhoto" accept="image/*" required />
+      <div id="photoPreview" style="margin-top:8px;"></div>
+
       <button type="button" class="btn outline" style="margin-top:12px;" onclick="getAIPrice()">🤖 Get AI Fair Price Suggestion</button>
 
       <div id="aiResult"></div>
