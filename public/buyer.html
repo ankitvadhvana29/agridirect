@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Buyer Marketplace — AgriDirect</title>
+<link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand">🌾 AgriDirect</div>
+  <nav>
+    <span id="welcome"></span>
+    <button onclick="logout()">Logout</button>
+  </nav>
+</div>
+
+<div class="container">
+
+  <div class="card">
+    <h2>Browse Fresh Produce</h2>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;">
+      <input type="text" id="filterCrop" placeholder="Filter by crop (e.g. onion)" style="flex:1;" />
+      <input type="text" id="filterLocation" placeholder="Filter by location" style="flex:1;" />
+      <button class="btn" onclick="loadProducts()">Search</button>
+    </div>
+  </div>
+
+  <div id="msg"></div>
+  <div id="products" class="grid"><p>Loading…</p></div>
+
+  <div class="card">
+    <h2>My Orders</h2>
+    <div id="myOrders"><p>Loading…</p></div>
+  </div>
+
+</div>
+
+<footer>SIH26033 · AI-Enabled Direct Farmer-to-Consumer Marketplace</footer>
+
+<script src="/js/api.js"></script>
+<script src="/js/buyer.js"></script>
+</body>
+</html>

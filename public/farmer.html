@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Farmer Dashboard — AgriDirect</title>
+<link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand">🌾 AgriDirect</div>
+  <nav>
+    <span id="welcome"></span>
+    <button onclick="logout()">Logout</button>
+  </nav>
+</div>
+
+<div class="container">
+
+  <div class="card">
+    <h2>List New Produce</h2>
+    <div id="msg"></div>
+    <form id="listForm">
+      <label>Crop</label>
+      <select id="cropName" required>
+        <option value="wheat">Wheat</option>
+        <option value="rice">Rice</option>
+        <option value="maize">Maize</option>
+        <option value="onion">Onion</option>
+        <option value="potato">Potato</option>
+        <option value="tomato">Tomato</option>
+        <option value="soybean">Soybean</option>
+        <option value="cotton">Cotton</option>
+        <option value="sugarcane">Sugarcane</option>
+        <option value="groundnut">Groundnut</option>
+        <option value="mustard">Mustard</option>
+        <option value="chana">Chana</option>
+        <option value="banana">Banana</option>
+        <option value="mango">Mango</option>
+        <option value="brinjal">Brinjal</option>
+        <option value="cabbage">Cabbage</option>
+        <option value="cauliflower">Cauliflower</option>
+        <option value="spinach">Spinach</option>
+        <option value="chilli">Chilli</option>
+        <option value="garlic">Garlic</option>
+      </select>
+
+      <label>Quantity (kg)</label>
+      <input type="number" id="quantity" min="1" required />
+
+      <button type="button" class="btn outline" style="margin-top:12px;" onclick="getAIPrice()">🤖 Get AI Fair Price Suggestion</button>
+
+      <div id="aiResult"></div>
+
+      <label style="margin-top:14px;">Your Selling Price (₹/kg)</label>
+      <input type="number" id="farmerPrice" step="0.5" placeholder="Auto-filled from AI suggestion, editable" />
+
+      <label>Pickup Location</label>
+      <input type="text" id="location" required placeholder="e.g. Nashik, Maharashtra" />
+
+      <button class="btn secondary" style="margin-top:16px;width:100%;">List Produce</button>
+    </form>
+  </div>
+
+  <div class="card">
+    <h2>My Listings</h2>
+    <div id="myProducts" class="grid"><p>Loading…</p></div>
+  </div>
+
+  <div class="card">
+    <h2>Orders Received</h2>
+    <div id="ordersTable"><p>Loading…</p></div>
+  </div>
+
+</div>
+
+<footer>SIH26033 · AI-Enabled Direct Farmer-to-Consumer Marketplace</footer>
+
+<script src="/js/api.js"></script>
+<script src="/js/farmer.js"></script>
+</body>
+</html>

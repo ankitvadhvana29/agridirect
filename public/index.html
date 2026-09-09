@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AgriDirect — Farmer to Consumer Marketplace</title>
+<link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand">🌾 AgriDirect</div>
+  <nav><a href="#auth">Login / Register</a></nav>
+</div>
+
+<div class="hero">
+  <h1>Cutting out the middlemen, connecting farmers directly to buyers</h1>
+  <p>AI-backed fair pricing, a rural-friendly interface, and pooled logistics — built for SIH26033.</p>
+</div>
+
+<div class="container" id="auth">
+  <div class="card" style="max-width:420px;margin:0 auto;">
+    <div class="role-switch">
+      <button id="loginTab" class="active" onclick="setTab('login')">Login</button>
+      <button id="registerTab" onclick="setTab('register')">Register</button>
+    </div>
+
+    <div id="msg"></div>
+
+    <!-- LOGIN FORM -->
+    <form id="loginForm">
+      <label>Phone Number</label>
+      <input type="tel" id="loginPhone" required placeholder="9876543210" />
+      <label>Password</label>
+      <input type="password" id="loginPassword" required />
+      <button class="btn" style="margin-top:16px;width:100%;">Login</button>
+    </form>
+
+    <!-- REGISTER FORM -->
+    <form id="registerForm" style="display:none;">
+      <label>I am a...</label>
+      <div class="role-switch" style="margin-bottom:6px;">
+        <button type="button" id="roleFarmer" class="active" onclick="setRole('farmer')">🧑‍🌾 Farmer</button>
+        <button type="button" id="roleBuyer" onclick="setRole('buyer')">🛒 Buyer</button>
+      </div>
+      <label>Full Name</label>
+      <input type="text" id="regName" required />
+      <label>Phone Number</label>
+      <input type="tel" id="regPhone" required placeholder="9876543210" />
+      <label>Password</label>
+      <input type="password" id="regPassword" required minlength="4" />
+      <label>Village / City</label>
+      <input type="text" id="regLocation" required placeholder="e.g. Nashik, Maharashtra" />
+      <label>Preferred Language</label>
+      <select id="regLanguage">
+        <option value="en">English</option>
+        <option value="hi">हिन्दी (Hindi)</option>
+        <option value="mr">मराठी (Marathi)</option>
+        <option value="gu">ગુજરાતી (Gujarati)</option>
+        <option value="ta">தமிழ் (Tamil)</option>
+      </select>
+      <button class="btn secondary" style="margin-top:16px;width:100%;">Create Account</button>
+    </form>
+  </div>
+</div>
+
+<footer>SIH26033 · AI-Enabled Direct Farmer-to-Consumer Marketplace · Team AgriDirect</footer>
+
+<script src="/js/api.js"></script>
+<script>
+  let selectedRole = "farmer";
+
+  function setTab(tab) {
+    document.getElementById("loginForm").style.display = tab === "login" ? "block" : "none";
+    document.getElementById("registerForm").style.display = tab === "register" ? "block" : "none";
+    document.getElementById("loginTab").classList.toggle("active", tab === "login");
+    document.getElementById("registerTab").classList.toggle("active", tab === "register");
+    document.getElementById("msg").innerHTML = "";
+  }
+
+  function setRole(role) {
+    selectedRole = role;
+    document.getElementById("roleFarmer").classList.toggle("active", role === "farmer");
+    document.getElementById("roleBuyer").classList.toggle("active", role === "buyer");
+  }
+
+  function showMsg(text, type) {
+    document.getElementById("msg").innerHTML = `<div class="msg ${type}">${text}</div>`;
+  }
+
+  document.getElementById("loginForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    try {
+      const { token, user } = await api("/auth/login", {
+        method: "POST",
+        body: {
+          phone: document.getElementById("loginPhone").value,
+          password: document.getElementById("loginPassword").value
+        }
+      });
+      saveSession(token, user);
+      window.location.href = user.role === "farmer" ? "/farmer.html" : "/buyer.html";
+    } catch (err) {
+      showMsg(err.message, "error");
+    }
+  });
+
+  document.getElementById("registerForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    try {
+      const { token, user } = await api("/auth/register", {
+        method: "POST",
+        body: {
+          name: document.getElementById("regName").value,
+          phone: document.getElementById("regPhone").value,
+          password: document.getElementById("regPassword").value,
+          role: selectedRole,
+          location: document.getElementById("regLocation").value,
+          language: document.getElementById("regLanguage").value
+        }
+      });
+      saveSession(token, user);
+      window.location.href = user.role === "farmer" ? "/farmer.html" : "/buyer.html";
+    } catch (err) {
+      showMsg(err.message, "error");
+    }
+  });
+
+  // Redirect if already logged in
+  if (getToken() && getUser()) {
+    window.location.href = getUser().role === "farmer" ? "/farmer.html" : "/buyer.html";
+  }
+</script>
+</body>
+</html>
