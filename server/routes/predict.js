@@ -67,17 +67,25 @@ router.post("/photo", async (req, res) => {
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) return res.status(500).json({ error: "AI service not configured" });
 
-    const geminiRes = await axios.post(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
-      {
-        contents: [{
+    const url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=" + apiKey;
+
+    const geminiRes = await axios.post(url, {
+      contents: [
+        {
           parts: [
-            { text: `You are an agricultural quality inspector. Look at this ${crop} photo and rate its quality from 1 to 10 (10 = excellent, fresh, no defects; 1 = poor, damaged, rotten). Respond ONLY in this exact JSON format with no extra text: {"rating": <number>, "reason": "<short reason, max 15 words>"}` },
-            { inline_data: { mime_type: "image/jpeg", data: photoBase64 } }
+            {
+              text: "You are an agricultural quality inspector. Look at this " + crop + " photo and rate its quality from 1 to 10 (10 = excellent, fresh, no defects; 1 = poor, damaged, rotten). Respond ONLY in this exact JSON format with no extra text: {\"rating\": <number>, \"reason\": \"<short reason, max 15 words>\"}"
+            },
+            {
+              inline_data: {
+                mime_type: "image/jpeg",
+                data: photoBase64
+              }
+            }
           ]
-        }]
-      }
-    );
+        }
+      ]
+    });
 
     const rawText = geminiRes.data.candidates[0].content.parts[0].text;
     const cleaned = rawText.replace(/```json|```/g, "").trim();
@@ -87,9 +95,9 @@ router.post("/photo", async (req, res) => {
     const qualityMultiplier = ratingToMultiplier(rating);
 
     const priceResult = predictPrice({
-      crop,
+      crop: crop,
       quantityKg: Number(quantityKg) || 1,
-      qualityMultiplier
+      qualityMultiplier: qualityMultiplier
     });
 
     if (priceResult.error) return res.status(404).json(priceResult);
@@ -101,7 +109,7 @@ router.post("/photo", async (req, res) => {
     });
 
   } catch (err) {
-    console.error("Photo rating error:", err.response?.data || err.message);
+    console.error("Photo rating error:", err.response ? err.response.data : err.message);
     res.status(500).json({ error: "Could not analyze photo. Try again." });
   }
 });
