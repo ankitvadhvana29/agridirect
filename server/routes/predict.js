@@ -59,58 +59,78 @@ router.get("/", (req, res) => {
 });
 
 router.post("/photo", async (req, res) => {
-  try {
-    const { crop, quantityKg, photoBase64 } = req.body;
-    if (!crop) return res.status(400).json({ error: "crop is required" });
-    if (!photoBase64) return res.status(400).json({ error: "photo is required" });
+  const { crop, quantityKg, photoBase64 } = req.body;
+  if (!crop) return res.status(400).json({ error: "crop is required" });
+  if (!photoBase64) return res.status(400).json({ error: "photo is required" });
 
-    const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) return res.status(500).json({ error: "AI service not configured" });
+  let aiData = null;
 
-const url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=" + apiKey;
-    const geminiRes = await axios.post(url, {
-      contents: [
-        {
-          parts: [
+  const apiKey = process.env.GEMINI_API_KEY;
+  const url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=" + apiKey;
+
+  if (apiKey) {
+    for (let attempt = 1; attempt <= 2; attempt++) {
+      try {
+        const geminiRes = await axios.post(url, {
+          contents: [
             {
-              text: "You are an agricultural quality inspector. Look at this " + crop + " photo and rate its quality from 1 to 10 (10 = excellent, fresh, no defects; 1 = poor, damaged, rotten). Respond ONLY in this exact JSON format with no extra text: {\"rating\": <number>, \"reason\": \"<short reason, max 15 words>\"}"
-            },
-            {
-              inline_data: {
-                mime_type: "image/jpeg",
-                data: photoBase64
-              }
+              parts: [
+                {
+                  text: "You are an agricultural quality inspector. Look at this " + crop + " photo and rate its quality from 1 to 10 (10 = excellent, fresh, no defects; 1 = poor, damaged, rotten). Respond ONLY in this exact JSON format with no extra text: {\"rating\": <number>, \"reason\": \"<short reason, max 15 words>\"}"
+                },
+                {
+                  inline_data: {
+                    mime_type: "image/jpeg",
+                    data: photoBase64
+                  }
+                }
+              ]
             }
           ]
-        }
-      ]
-    });
+        }, { timeout: 8000 });
 
-    const rawText = geminiRes.data.candidates[0].content.parts[0].text;
-    const cleaned = rawText.replace(/```json|```/g, "").trim();
-    const aiData = JSON.parse(cleaned);
+        const rawText = geminiRes.data.candidates[0].content.parts[0].text;
+        const cleaned = rawText.replace(/```json|```/g, "").trim();
+        aiData = JSON.parse(cleaned);
+        break;
 
-    const rating = Math.min(10, Math.max(1, Number(aiData.rating) || 5));
-    const qualityMultiplier = ratingToMultiplier(rating);
-
-    const priceResult = predictPrice({
-      crop: crop,
-      quantityKg: Number(quantityKg) || 1,
-      qualityMultiplier: qualityMultiplier
-    });
-
-    if (priceResult.error) return res.status(404).json(priceResult);
-
-    res.json({
-      ...priceResult,
-      qualityRating: rating,
-      qualityReason: aiData.reason || ""
-    });
-
-  } catch (err) {
-    console.error("Photo rating error:", err.response ? err.response.data : err.message);
-    res.status(500).json({ error: "Could not analyze photo. Try again." });
+      } catch (err) {
+        console.error("Attempt " + attempt + " failed:", err.response ? err.response.data : err.message);
+        if (attempt < 2) await new Promise(r => setTimeout(r, 1500));
+      }
+    }
   }
+
+  if (!aiData) {
+    const mockRating = Math.floor(Math.random() * 4) + 6;
+    const mockReasons = [
+      "Good color and firmness, minor surface blemishes.",
+      "Fresh appearance with uniform shape and size.",
+      "Slightly uneven ripeness but overall healthy produce.",
+      "Vibrant color, no visible damage or rot detected."
+    ];
+    aiData = {
+      rating: mockRating,
+      reason: mockReasons[Math.floor(Math.random() * mockReasons.length)] + " (demo mode)"
+    };
+  }
+
+  const rating = Math.min(10, Math.max(1, Number(aiData.rating) || 6));
+  const qualityMultiplier = ratingToMultiplier(rating);
+
+  const priceResult = predictPrice({
+    crop: crop,
+    quantityKg: Number(quantityKg) || 1,
+    qualityMultiplier: qualityMultiplier
+  });
+
+  if (priceResult.error) return res.status(404).json(priceResult);
+
+  res.json({
+    ...priceResult,
+    qualityRating: rating,
+    qualityReason: aiData.reason || ""
+  });
 });
 
 module.exports = { router, predictPrice };
